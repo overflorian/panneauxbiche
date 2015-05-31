@@ -8,3 +8,4 @@ Cf. https://fr.wikipedia.org/wiki/Panneau_signalant_le_passage_d%27animaux_sauva
 Check out our Twitter feed for hot news: https://twitter.com/panneauxbiche
 
 If you'd like to map the sign in OSM, please use hazard=animal_crossing. You can also specify the animal species with species=* cf. http://wiki.openstreetmap.org/wiki/Key:species
+I suggest
