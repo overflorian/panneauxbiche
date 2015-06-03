@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Sauvez un animal sauvage</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
+    <style>
+		body {
+			padding: 0;
+			margin: 0;
+		}
+		html, body, #map {
+			height: 100%;
+		}
+    </style>
+    <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <!-- script src="./jquery/jquery.csv-0.71.min.js"></script -->
+</head>
+<body>
+    <div id="map"></div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
+    <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-hash/v0.2.1/leaflet-hash.js'></script>
+    <script>
+        var userLocation;   // localisation du navigateur
+   		var animalsLayer = L.layerGroup([], {
+            attribution: 'Données &copy; Les contributeurs d\'<a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
+				         '<a href="http://opendatacommons.org/licenses/odbl/1-0/">ODbL 1.0</a>, ' +
+                         'Extraction avec <a href="http://overpass-api.de/">Overpass (de)</a>, '   
+           
+        });
+
+        function askForPlots() {
+            var zoom = map.getZoom();
+            var bounds = map.getBounds();
+            var minll = bounds.getSouthWest();
+            var maxll = bounds.getNorthEast();
+            var bbox = minll.lat + ',' + minll.lng + ',' + maxll.lat + ',' + maxll.lng;
+            var selection = [
+                'node ["hazard"="wild_animals"](' + bbox + ');',
+                'node ["hazard"="animal_crossing"](' + bbox + ');',
+                'node ["hazard"="moose"](' + bbox + ');',
+                'way ["hazard"="wild_animals"](' + bbox + ');',
+                'way ["hazard"="animal_crossing"](' + bbox + ');',
+                'way ["hazard"="moose"](' + bbox + ');'
+            ];
+            
+            var url = "http://overpass-api.de/api/interpreter?data=[out:json][timeout:120];(";
+            selection.forEach( function(val, key){
+                url += val;
+            });
+            url += "); out body; >; out skel qt;";
+                   
+            $.getJSON(url,
+                function(feature){
+                    var myIcon = L.icon({
+                        iconUrl: 'biche.png',
+                        iconSize: [28, 54],
+                        iconAnchor: [14, 54],
+//                        popupAnchor: [-3, -76],
+                        shadowUrl: 'biche_shadow.png',
+//                        shadowRetinaUrl: 'my-icon-shadow@2x.png',
+                        shadowSize: [37, 42],
+                        shadowAnchor: [5, 32]
+                    });
+
+                    if (feature == null) return;
+		            animalsLayer.clearLayers();
+                    var nodes = [];
+                    var ways = [];
+                    $.each(feature.elements, function( key, val ) {
+                        if (val.type == 'node') {
+                            nodes[val.id] = L.latLng(val.lat, val.lon);
+                            if ('tags' in val) {
+                                var marker = null;
+                                if (zoom < 10) {
+                                    marker = L.circle(L.latLng(val.lat, val.lon), 1, { color: 'red' });
+                                } else {
+                                    marker = L.marker(L.latLng(val.lat, val.lon), {icon: myIcon});
+                                }
+                                animalsLayer.addLayer(marker);
+                            }
+                        } else if (val.type == 'way' && 'tags' in val) {
+                            ways.push(val);
+                        }
+                    });
+                    $.each(ways, function(key, val) {
+                        var latlng = [];
+                        $.each(val.nodes, function(key, val) {
+                            latlng.push(nodes[val]);
+                        });
+                        animalsLayer.addLayer(L.polyline(latlng, {
+                            color: 'red',
+                            smoothFactor: 5
+                        }));
+
+                    });
+            });
+        };
+
+   		var mapboxLayer = L.tileLayer('//{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+			id: 'examples.map-i875mjb7'
+		});
+
+   		var mapquestLayer = L.tileLayer('//otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Données &copy; Les contributeurs d\'<a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
+				         '<a href="http://opendatacommons.org/licenses/odbl/1-0/">ODbL 1.0</a>, ' +
+                         'Extraction avec <a href="http://overpass-api.de/">Overpass (de)</a>, ' +
+                         'Tiles Courtesy of <a href="http://www.mapquest.com/" target="_blank">MapQuest</a> <img src="http://developer.mapquest.com/content/osm/mq_logo.png">',
+            subdomains: '1234'				
+		});
+
+        var map = L.map('map', {
+            layers: [mapquestLayer, animalsLayer],
+            center: [45, 2],
+            zoom: 6
+        });
+        var hash = L.hash(map);
+
+/*
+        L.Control.social = L.Control.extend({
+          options: {
+            // topright, topleft, bottomleft, bottomright
+            position: 'topright'
+          },
+          initialize: function (options) {
+            // constructor
+          },
+          onAdd: function (map) {
+            // happens after added to map
+          },
+          onRemove: function (map) {
+            // when removed
+          }
+        });
+
+        L.control.social = function(id, options) {
+          return new L.Control.Sample(id, options);
+        }
+
+
+        control.addMap(map);
+*/
+
+//        askForPlots();
+
+        map.on('moveend', function(e) {
+            askForPlots();
+        });
+
+        map.on('locationfound', function(e){
+            userLocation = e;
+			var radius = e.accuracy / 2;
+//			L.marker(e.latlng).addTo(map)
+//				.bindPopup("Vous êtes dans un rayon de " + radius + " m.").openPopup();
+			L.circle(e.latlng, radius).addTo(map);
+        });
+
+        map.locate();
+
+/*
+Passer à photon.komoot.de avec autocomplétion
+
+        new L.Control.OSMGeocoder({    // https://github.com/k4r573n/leaflet-control-osm-geocoder
+        position: 'topleft',
+        text: 'Centrer',
+        email: 'panneauxbiche.com'
+        }).addTo(map);
+*/
+
+
+
+
+    </script>
+</body>
+</html>
