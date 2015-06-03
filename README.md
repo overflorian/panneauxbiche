@@ -10,3 +10,9 @@ Check out our Twitter feed for hot news: https://twitter.com/panneauxbiche
 If you'd like to map the sign in OSM, please use hazard=animal_crossing. You can also specify the animal species with species=* cf. http://wiki.openstreetmap.org/wiki/Key:species
 
 I suggest you also use man_made=sign but the tags are still under discussion cf. http://wiki.openstreetmap.org/wiki/Proposed_features/hazard#Animal_crossign
+
+## License
+''Sauf indication contraire, les textes, les images, le code publié ici est sous licence GNU GPL V3.''
+
+## How to contribute
+Pour contribuer, il suffit de rajouter des éléments dans le projet <a href="http://openstreetmap.org">OSM</a>. La prise en compte des ajouts ou modifications est quasiment immédiate.
