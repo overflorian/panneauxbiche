@@ -1,10 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Sauvez un animal sauvage</title>
+	<title>Sauvez une biche !</title>
 	<meta charset="utf-8" />
+	<link rel="icon" href="favicon.ico" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
+    <link rel="stylesheet" href="leaflet.modal.min.css" />
+
+
     <style>
 		body {
 			padding: 0;
@@ -14,21 +18,50 @@
 			height: 100%;
 		}
     </style>
-    <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
-    <!-- script src="./jquery/jquery.csv-0.71.min.js"></script -->
+
+
 </head>
 <body>
+
     <div id="map"></div>
+
     <script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
+    <script type="text/javascript" src="Leaflet.Modal.min.js"></script>
     <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-hash/v0.2.1/leaflet-hash.js'></script>
     <script>
+
+        var informationControl = L.Control.extend({
+            options: {
+                position: 'topright' 
+                //control position - allowed: 'topleft', 'topright', 'bottomleft', 'bottomright'
+            },
+            onAdd: function (map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+                
+                container.style.backgroundColor = 'white';
+                container.style.backgroundImage = "url(information.png)";
+                container.style.backgroundSize = "30px 30px";
+                container.style.width = '30px';
+                container.style.height = '30px';
+                
+                container.onclick = function(e) {
+
+                    console.log('buttonClicked');
+                    console.log(e);
+                    console.log(map);
+                    map.fire('modal', {
+                      content: '<h1>Sauvez une biche...</h1>Trouvez un panneau "Biche"<br/><img src="panneauxbiche_200px.png" alt="Panneau Biche" />'
+                    });
+                };
+
+                return container;
+            }
+        });    
+        
+        
+    
+    
         var userLocation;   // localisation du navigateur
-   		var animalsLayer = L.layerGroup([], {
-            attribution: 'Données &copy; Les contributeurs d\'<a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
-				         '<a href="http://opendatacommons.org/licenses/odbl/1-0/">ODbL 1.0</a>, ' +
-                         'Extraction avec <a href="http://overpass-api.de/">Overpass (de)</a>, '   
-           
-        });
 
         function askForPlots() {
             var zoom = map.getZoom();
@@ -98,11 +131,13 @@
             });
         };
 
+/*
    		var mapboxLayer = L.tileLayer('//{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
 			maxZoom: 18,
 			attribution: 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
 			id: 'examples.map-i875mjb7'
 		});
+*/
 
    		var mapquestLayer = L.tileLayer('//otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
 			maxZoom: 18,
@@ -113,53 +148,46 @@
             subdomains: '1234'				
 		});
 
-        var map = L.map('map', {
-            layers: [mapquestLayer, animalsLayer],
-            center: [45, 2],
-            zoom: 6
-        });
-        var hash = L.hash(map);
-
-/*
-        L.Control.social = L.Control.extend({
-          options: {
-            // topright, topleft, bottomleft, bottomright
-            position: 'topright'
-          },
-          initialize: function (options) {
-            // constructor
-          },
-          onAdd: function (map) {
-            // happens after added to map
-          },
-          onRemove: function (map) {
-            // when removed
-          }
+   		var animalsLayer = L.layerGroup([], {
+            attribution: 'Données &copy; Les contributeurs d\'<a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
+				         '<a href="http://opendatacommons.org/licenses/odbl/1-0/">ODbL 1.0</a>, ' +
+                         'Extraction avec <a href="http://overpass-api.de/">Overpass (de)</a>, '   
+           
         });
 
-        L.control.social = function(id, options) {
-          return new L.Control.Sample(id, options);
-        }
+        var map;
+        var hash;
+        
+        window.addEventListener('DOMContentLoaded', function(e) {
+            map = L.map('map', {
+                layers: [mapquestLayer, animalsLayer],
+                center: [45, 2],
+                zoom: 6
+            });
 
+            map.addControl(new informationControl());
 
-        control.addMap(map);
-*/
+            hash = L.hash(map);
 
-        askForPlots();
+            map.on('moveend', function(e) {
+                askForPlots();
+            });
+    
+            map.on('locationfound', function(e){
+                userLocation = e;
+    			var radius = e.accuracy / 2;
+    //			L.marker(e.latlng).addTo(map)
+    //				.bindPopup("Vous êtes dans un rayon de " + radius + " m.").openPopup();
+    			L.circle(e.latlng, radius).addTo(map);
+            });
+    
+            map.locate();
 
-        map.on('moveend', function(e) {
             askForPlots();
+        
         });
 
-        map.on('locationfound', function(e){
-            userLocation = e;
-			var radius = e.accuracy / 2;
-//			L.marker(e.latlng).addTo(map)
-//				.bindPopup("Vous êtes dans un rayon de " + radius + " m.").openPopup();
-			L.circle(e.latlng, radius).addTo(map);
-        });
 
-        map.locate();
 
 /*
 Passer à photon.komoot.de avec autocomplétion
@@ -175,5 +203,8 @@ Passer à photon.komoot.de avec autocomplétion
 
 
     </script>
+
+    <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <!-- script src="./jquery/jquery.csv-0.71.min.js"></script -->
 </body>
 </html>
