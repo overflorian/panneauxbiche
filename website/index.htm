@@ -6,7 +6,7 @@
 	<link rel="icon" href="favicon.ico" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
-    <link rel="stylesheet" href="leaflet.modal.min.css" />
+    <link rel="stylesheet" href="css/leaflet.modal.min.css" />
 
 
     <style>
@@ -26,7 +26,7 @@
     <div id="map"></div>
 
     <script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
-    <script type="text/javascript" src="Leaflet.Modal.min.js"></script>
+    <script type="text/javascript" src="js/Leaflet.Modal.min.js"></script>
     <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-hash/v0.2.1/leaflet-hash.js'></script>
     <script>
 
@@ -39,7 +39,7 @@
                 var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
                 
                 container.style.backgroundColor = 'white';
-                container.style.backgroundImage = "url(information.png)";
+                container.style.backgroundImage = "url(images/information.png)";
                 container.style.backgroundSize = "30px 30px";
                 container.style.width = '30px';
                 container.style.height = '30px';
@@ -50,7 +50,34 @@
                     console.log(e);
                     console.log(map);
                     map.fire('modal', {
-                      content: '<h1>Sauvez une biche...</h1>Trouvez un panneau "Biche"<br/><img src="panneauxbiche_200px.png" alt="Panneau Biche" />'
+                        content: '                                              \
+<h1>Sauvez une biche...</h1>                                                    \
+                                                                                \
+<img src="images/panneauxbiche_200px.png" alt="Panneau Biche"                   \
+style="float:right"/>                                                           \
+                                                                                \
+<p>Display wild animal signs from OpenStreetMap, starting by hind, bat and toad.\
+Check <a href="http://panneauxbiche.com">http://panneauxbiche.com</a> for the   \
+real-time generated map from OpenStreetMap.</p>                                 \
+                                                                                \
+<p>This project started (as a joke) in may 2015 at SoTM-fr in Brest and the goal\
+is to display all A15b road signs. <i>Cf.</i>                                   \
+<a href="https://fr.wikipedia.org/wiki/Panneau_signalant_le_passage_d%27animaux_sauvages_en_France">Wikipedia.org \
+- Panneau signalant le passage d&quote;animaux sauvages en France</a></p>       \
+                                                                                \
+<p>Check out our Twitter feed for hot news:                                     \
+<a href="https://twitter.com/panneauxbiche">Twitter.com - panneauxbiche</a></p> \
+                                                                                \
+<p>If you&quote;d like to map the sign in OSM, please use hazard=animal_crossing.   \
+You can also specify the animal species with species=* <i>cf.</i>               \
+<a href="http://wiki.openstreetmap.org/wiki/Key:species">Wiki OpenStreetMap.org \
+- Key:species</a></p>                                                           \
+                                                                                \
+<p>I suggest you also use man_made=sign but the tags are still under discussion \
+<i>cf.</i>                                                                      \
+<a href="http://wiki.openstreetmap.org/wiki/Proposed_features/hazard#Animal_crossign">Wiki \
+OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            \
+'
                     });
                 };
 
@@ -70,28 +97,28 @@
             var maxll = bounds.getNorthEast();
             var bbox = minll.lat + ',' + minll.lng + ',' + maxll.lat + ',' + maxll.lng;
             var selection = [
-                'node ["hazard"="wild_animals"](' + bbox + ');',
-                'node ["hazard"="animal_crossing"](' + bbox + ');',
-                'node ["hazard"="moose"](' + bbox + ');',
-                'way ["hazard"="wild_animals"](' + bbox + ');',
-                'way ["hazard"="animal_crossing"](' + bbox + ');',
-                'way ["hazard"="moose"](' + bbox + ');'
+                '["hazard"="wild_animals"]',
+                '["hazard"="animal_crossing"]',
+                '["hazard"="moose"]',
+                '["hazard"="shark"]',
+                '["crocodile"="yes"]'
             ];
             
             var url = "http://overpass-api.de/api/interpreter?data=[out:json][timeout:120];(";
             selection.forEach( function(val, key){
-                url += val;
+                url += "node" + val + "(" + bbox + ");";
+                url += "way" + val + "(" + bbox + ");";
             });
-            url += "); out body; >; out skel qt;";
+            url += ");out body;>;out skel qt;";
                    
             $.getJSON(url,
                 function(feature){
                     var myIcon = L.icon({
-                        iconUrl: 'biche.png',
+                        iconUrl: 'images/biche.png',
                         iconSize: [28, 54],
                         iconAnchor: [14, 54],
 //                        popupAnchor: [-3, -76],
-                        shadowUrl: 'biche_shadow.png',
+                        shadowUrl: 'images/biche_shadow.png',
 //                        shadowRetinaUrl: 'my-icon-shadow@2x.png',
                         shadowSize: [37, 42],
                         shadowAnchor: [5, 32]
