@@ -16,6 +16,9 @@
 <!-- Include the loading control -->
     <link rel="stylesheet" href="css/Control.Loading.css" />
     <script src="js/Control.Loading.js"></script>
+    
+    <script src="js/leaflet.geometryutil.js"></script>
+    
 
     <style>
 		body {
@@ -95,6 +98,25 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
     
         var userLocation;   // localisation du navigateur
         var title = null;
+        
+        function getIconFrom(tags) {
+            var url = null;
+            switch (tags.hazard) {
+                case "children": url = "A13a.png"; break;
+                case "wild_animals":
+                case "animals_crossing":
+                case "deer":
+                case "animal_crossing": url = "A15b.png"; break;
+                case "moose": url = "moose.png"; break;
+                case "cyclists": url = "A21.png"; break;
+                case "horses": url = "A15c.png"; break;
+                case "pedestrians": url = "A13b.png"; break;
+                case "shark": url = "shark.png"; break;
+                case "crocodile": url = "crocodile.png"; break;
+                default : url = "A14.png";
+            }
+            return url;
+        }
 
         function askForPlots() {
             map.fireEvent('dataloading'); 
@@ -126,16 +148,6 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
                    
             $.getJSON(url,
                 function(feature){
-                    var myIcon = L.icon({
-                        iconUrl: 'images/biche.png',
-                        iconSize: [28, 54],
-                        iconAnchor: [14, 54],
-//                        popupAnchor: [-3, -76],
-                        shadowUrl: 'images/biche_shadow.png',
-//                        shadowRetinaUrl: 'my-icon-shadow@2x.png',
-                        shadowSize: [37, 42],
-                        shadowAnchor: [5, 32]
-                    });
 
                     if (feature == null) {   // surement une erreur
                         map.fireEvent('dataload'); 
@@ -145,20 +157,37 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
                     var nodes = [];
                     var ways = [];
                     var layers = [];
-                    feature.elements.forEach(function( elem ) {
-                        if (elem.type == 'node') {
-                            nodes[elem.id] = L.latLng(elem.lat, elem.lon);
-                            if ('tags' in elem) {
-                                var marker = null;
-                                if (zoom < 10) {
-                                    marker = L.circle(L.latLng(elem.lat, elem.lon), 1, { color: 'red' });
-                                } else {
-                                    marker = L.marker(L.latLng(elem.lat, elem.lon), {icon: myIcon});
-                                }
-                                layers.push(marker);
+                    var popup = function(event) { 
+                        console.log(event, this);
+                        var t = (this.type == "node" ? "Node" : "Way") + " with tags : <ul>";
+                        for(var key in this.tags) {
+                            if (this.tags.hasOwnProperty(key)) {
+                                t += "<li>" + key + " = '" + this.tags[key] + "'</li>";
                             }
-                        } else if (elem.type == 'way' && 'tags' in elem) {
-                            ways.push(elem);
+                        };
+                        t += "</ul>";
+                        map.openPopup(t, event.latlng);
+                    };
+
+                    feature.elements.forEach(function( elem ) {
+                        switch (elem.type) {
+                            case 'node':
+                                nodes[elem.id] = L.latLng(elem.lat, elem.lon);
+                                if ('tags' in elem) {
+                                    layers.push(L.marker(L.latLng(elem.lat, elem.lon), {
+                                        icon: L.icon({
+                                            iconUrl: 'images/' + getIconFrom(elem.tags),
+                                            iconSize: [30, 27]
+                                        })
+                                    }).on('click', popup, {type: 'node', tags: elem.tags}
+                                    ));
+                                }
+                                break;
+                            case 'way':
+                                if ('tags' in elem) ways.push(elem);
+                                break;
+                            default:
+                                console.log('type error');
                         }
                     });
                     ways.forEach(function( way ) {
@@ -167,55 +196,29 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
                             latlngs.push(nodes[nodeId]);
                         });
                         
-                        var url = "";
-                        switch (way.tags.hazard) {
-                            case "children": url = "A13a.png"; break;
-                            case "wild_animals":
-                            case "animals_crossing":
-                            case "deer":
-                            case "animal_crossing": url = "A15b.png"; break;
-                            case "moose": url = "moose.png"; break;
-                            case "cyclists": url = "A21.png"; break;
-                            case "horses": url = "A15c.png"; break;
-                            case "pedestrians": url = "A13b.png"; break;
-                            case "shark": url = "shark.png"; break;
-                            case "crocodile": url = "crocodile.png"; break;
-                            default : url = "A14.png";
-                        }
+                        var ll = L.GeometryUtil.interpolateOnLine(map, latlngs, 0.5).latLng;
                         
-                        var pLine = L.polyline(latlngs, {
+                        layers.push(L.polyline(latlngs, {
                             color: 'red',
                             smoothFactor: 2
-                        }).on('mouseover', function(e) {
-                            if (title != null) map.removeLayer(title);
-                            title = L.marker(e.latlng, {
-                                icon: L.icon({
-                                    iconUrl: "images/" + url,
-                                    iconAnchor: [30, 50]
-                                })
-                            }).addTo(map);
-                        }).on('mousemove', function(e) {
-                            if (title != null) map.removeLayer(title);
-                            title = L.marker(e.latlng, {
-                                icon: L.icon({
-                                    iconUrl: "images/" + url,
-                                    iconAnchor: [30, 50]
-                                })
-                            }).addTo(map);
-                        }).on('mouseout', function(e){
-                            if (title != null) {
-                                map.removeLayer(title);   
-                                title = null;                             
-                            }
-                        });
-                        layers.push(pLine);
-
+                        }).on('click', popup, {type: 'way', tags: way.tags}
+                        ));
+                        
+                        layers.push(L.marker(L.latLng(ll.lat, ll.lng), {
+                            icon: L.icon({
+                                iconUrl: 'images/' + getIconFrom(way.tags),
+                                iconSize: [30, 27]
+                            })
+                        }).on('click', popup, {type: 'way', tags: way.tags}
+                        ));
                     });
                     map.removeLayer(animalsLayer);
 		            animalsLayer = L.featureGroup(layers).addTo(map);
+/*
                     animalsLayer.on('click', function(e){
                         console.log(e);
                     });
+*/                
                     map.fireEvent('dataload'); 
             });
         };
