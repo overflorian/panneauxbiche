@@ -17,13 +17,20 @@ I suggest you also use man_made=sign but the tags are still under discussion cf.
 ## [Leaflet] plugins
 - [Leaflet.loading] is free software, and may be redistributed under the MIT License.
 - [Leaflet.Modale] - The MIT License (MIT)
-- [Leaflet-hash] - MIT License. 
-
+- [Leaflet-hash] - MIT License 
+- [Leaflet.geometryutil] - BSD New
 
 ## How to contribute
-Pour contribuer, il suffit de rajouter des éléments dans le projet <a href="http://openstreetmap.org">OSM</a>. La prise en compte des ajouts ou modifications est quasiment immédiate.
+Pour contribuer, il suffit de rajouter des éléments dans le projet [OSM]. La prise en compte des ajouts ou modifications est quasiment immédiate.
+
+## Authors
+* [Florian](https://github.com/overflorian)
+* [Marc](https://github.com/Marcussacapuces91)
+* et d'autres encore...
 
 [Leaflet]:         https://github.com/Leaflet/Leaflet
 [Leaflet.loading]: https://github.com/ebrelsford/Leaflet.loading
 [Leaflet.Modale]:  https://github.com/w8r/Leaflet.Modal/
 [Leaflet-hash]:    https://github.com/mlevans/leaflet-hash
+[Leaflet.geometryutil]: https://github.com/makinacorpus/Leaflet.GeometryUtil
+[OSM]: https://www.openstreetmap.org
