@@ -14,5 +14,13 @@ I suggest you also use man_made=sign but the tags are still under discussion cf.
 ## License
 ''Sauf indication contraire, les textes, les images, le code publié ici est sous licence GNU GPL V3.''
 
+### Leaflet plugins
+- Leaflet.loading is free software, and may be redistributed under the MIT License.
+- Leaflet.Modale
+- Leaflet-hash
+
+
 ## How to contribute
 Pour contribuer, il suffit de rajouter des éléments dans le projet <a href="http://openstreetmap.org">OSM</a>. La prise en compte des ajouts ou modifications est quasiment immédiate.
+
+[Leaflet]: https://github.com/Leaflet/Leaflet

@@ -4,10 +4,18 @@
 	<title>Sauvez une biche !</title>
 	<meta charset="utf-8" />
 	<link rel="icon" href="favicon.ico" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
-    <link rel="stylesheet" href="css/leaflet.modal.min.css" />
+    <script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
 
+    <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-hash/v0.2.1/leaflet-hash.js'></script>
+
+    <link rel="stylesheet" href="css/leaflet.modal.min.css" />
+    <script type="text/javascript" src="js/Leaflet.Modal.min.js"></script>
+    
+<!-- Include the loading control -->
+    <link rel="stylesheet" href="css/Control.Loading.css" />
+    <script src="js/Control.Loading.js"></script>
 
     <style>
 		body {
@@ -25,9 +33,6 @@
 
     <div id="map"></div>
 
-    <script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
-    <script type="text/javascript" src="js/Leaflet.Modal.min.js"></script>
-    <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-hash/v0.2.1/leaflet-hash.js'></script>
     <script>
 
         var informationControl = L.Control.extend({
@@ -89,19 +94,27 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
     
     
         var userLocation;   // localisation du navigateur
+        var title = null;
 
         function askForPlots() {
+            map.fireEvent('dataloading'); 
             var zoom = map.getZoom();
             var bounds = map.getBounds();
             var minll = bounds.getSouthWest();
             var maxll = bounds.getNorthEast();
             var bbox = minll.lat + ',' + minll.lng + ',' + maxll.lat + ',' + maxll.lng;
+/// @see http://taginfo.openstreetmap.org/keys/?key=hazard#values
             var selection = [
-                '["hazard"="wild_animals"]',
-                '["hazard"="animal_crossing"]',
-                '["hazard"="moose"]',
-                '["hazard"="shark"]',
-                '["crocodile"="yes"]'
+                '["hazard"="children"]',            // enfants
+                '["hazard"="wild_animals"]',        // animaux sauvages
+                '["hazard"="moose"]',               // rênes
+                '["hazard"="animal_crossing"]',     // traversée d'animaux
+                '["hazard"="cyclists"]',            // cyclistes
+                '["hazard"="pedestrians"]',         // piétons
+                '["hazard"="deer"]',                // Cerf / biche
+                '["hazard"="animals_crossing"]',    // traversée d'animaux (pluriel)
+                '["hazard"="shark"]',               // requin
+                '["crocodile"="yes"]'               // crocodile
             ];
             
             var url = "http://overpass-api.de/api/interpreter?data=[out:json][timeout:120];(";
@@ -124,37 +137,86 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
                         shadowAnchor: [5, 32]
                     });
 
-                    if (feature == null) return;
-		            animalsLayer.clearLayers();
+                    if (feature == null) {   // surement une erreur
+                        map.fireEvent('dataload'); 
+                        return;
+                    }
+
                     var nodes = [];
                     var ways = [];
-                    $.each(feature.elements, function( key, val ) {
-                        if (val.type == 'node') {
-                            nodes[val.id] = L.latLng(val.lat, val.lon);
-                            if ('tags' in val) {
+                    var layers = [];
+                    feature.elements.forEach(function( elem ) {
+                        if (elem.type == 'node') {
+                            nodes[elem.id] = L.latLng(elem.lat, elem.lon);
+                            if ('tags' in elem) {
                                 var marker = null;
                                 if (zoom < 10) {
-                                    marker = L.circle(L.latLng(val.lat, val.lon), 1, { color: 'red' });
+                                    marker = L.circle(L.latLng(elem.lat, elem.lon), 1, { color: 'red' });
                                 } else {
-                                    marker = L.marker(L.latLng(val.lat, val.lon), {icon: myIcon});
+                                    marker = L.marker(L.latLng(elem.lat, elem.lon), {icon: myIcon});
                                 }
-                                animalsLayer.addLayer(marker);
+                                layers.push(marker);
                             }
-                        } else if (val.type == 'way' && 'tags' in val) {
-                            ways.push(val);
+                        } else if (elem.type == 'way' && 'tags' in elem) {
+                            ways.push(elem);
                         }
                     });
-                    $.each(ways, function(key, val) {
-                        var latlng = [];
-                        $.each(val.nodes, function(key, val) {
-                            latlng.push(nodes[val]);
+                    ways.forEach(function( way ) {
+                        var latlngs = [];
+                        way.nodes.forEach(function( nodeId ) {
+                            latlngs.push(nodes[nodeId]);
                         });
-                        animalsLayer.addLayer(L.polyline(latlng, {
+                        
+                        var url = "";
+                        switch (way.tags.hazard) {
+                            case "children": url = "A13a.png"; break;
+                            case "wild_animals":
+                            case "animals_crossing":
+                            case "deer":
+                            case "animal_crossing": url = "A15b.png"; break;
+                            case "moose": url = "moose.png"; break;
+                            case "cyclists": url = "A21.png"; break;
+                            case "horses": url = "A15c.png"; break;
+                            case "pedestrians": url = "A13b.png"; break;
+                            case "shark": url = "shark.png"; break;
+                            case "crocodile": url = "crocodile.png"; break;
+                            default : url = "A14.png";
+                        }
+                        
+                        var pLine = L.polyline(latlngs, {
                             color: 'red',
-                            smoothFactor: 5
-                        }));
+                            smoothFactor: 2
+                        }).on('mouseover', function(e) {
+                            if (title != null) map.removeLayer(title);
+                            title = L.marker(e.latlng, {
+                                icon: L.icon({
+                                    iconUrl: "images/" + url,
+                                    iconAnchor: [30, 50]
+                                })
+                            }).addTo(map);
+                        }).on('mousemove', function(e) {
+                            if (title != null) map.removeLayer(title);
+                            title = L.marker(e.latlng, {
+                                icon: L.icon({
+                                    iconUrl: "images/" + url,
+                                    iconAnchor: [30, 50]
+                                })
+                            }).addTo(map);
+                        }).on('mouseout', function(e){
+                            if (title != null) {
+                                map.removeLayer(title);   
+                                title = null;                             
+                            }
+                        });
+                        layers.push(pLine);
 
                     });
+                    map.removeLayer(animalsLayer);
+		            animalsLayer = L.featureGroup(layers).addTo(map);
+                    animalsLayer.on('click', function(e){
+                        console.log(e);
+                    });
+                    map.fireEvent('dataload'); 
             });
         };
 
@@ -175,12 +237,8 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
             subdomains: '1234'				
 		});
 
-   		var animalsLayer = L.layerGroup([], {
-            attribution: 'Données &copy; Les contributeurs d\'<a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
-				         '<a href="http://opendatacommons.org/licenses/odbl/1-0/">ODbL 1.0</a>, ' +
-                         'Extraction avec <a href="http://overpass-api.de/">Overpass (de)</a>, '   
-           
-        });
+   		var animalsLayer = L.featureGroup();   // vide
+   		
 
         var map;
         var hash;
@@ -189,7 +247,8 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
             map = L.map('map', {
                 layers: [mapquestLayer, animalsLayer],
                 center: [45, 2],
-                zoom: 6
+                zoom: 6,
+                loadingControl: true
             });
 
             map.addControl(new informationControl());
@@ -208,7 +267,10 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
     			L.circle(e.latlng, radius).addTo(map);
             });
     
-            map.locate();
+            map.locate({
+                watch: true                // follow location
+//                enableHighAccuracy: true    // using GPS
+            });
 
             askForPlots();
         
