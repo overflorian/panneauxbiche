@@ -38,6 +38,39 @@
 
     <script>
 
+/**
+ * This is a method of the L.Polygon object which returns the position of the 
+ * "middle" of the polygon.
+ * The returned position might not be inside the polygon.
+ * @return latlng coordonates of the position.  
+ */
+        L.Polygon.prototype.getCenter = function() {
+            var pts = this._latlngs;
+            var off = pts[0];
+            var twicearea = 0;
+            var x = 0;
+            var y = 0;
+            var nPts = pts.length;
+            var p1, p2;
+            var f;
+            for (var i = 0, j = nPts - 1; i < nPts; j = i++) {
+                p1 = pts[i];
+                p2 = pts[j];
+                f = (p1.lat - off.lat) * (p2.lng - off.lng) - (p2.lat - off.lat) * (p1.lng - off.lng);
+                twicearea += f;
+                x += (p1.lat + p2.lat - 2 * off.lat) * f;
+                y += (p1.lng + p2.lng - 2 * off.lng) * f;
+            }
+            f = twicearea * 3;
+            return new L.LatLng(
+                x / f + off.lat,
+                y / f + off.lng
+            );
+        }
+
+/**
+ * Instance of "i" control which show some informations.
+ */ 
         var informationControl = L.Control.extend({
             options: {
                 position: 'topright' 
@@ -88,17 +121,15 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
 '
                     });
                 };
-
                 return container;
             }
         });    
-        
-        
     
-    
-        var userLocation;   // localisation du navigateur
-        var title = null;
-        
+/**
+ * Return an icon file name giving a tags list.
+ * @param tags Object with tags as properties.
+ * @return file name.
+ */   
         function getIconFrom(tags) {
             var url = null;
             switch (tags.hazard) {
@@ -117,7 +148,38 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
             }
             return url;
         }
+        
+/**
+ * Open a popup composed using the event & the this instance.
+ * @param event The event which has been fired.
+ **/  
+        function popup(event) { 
+            var t = (this.type == "node" ? "Node" : "Way") + 
+                    ' <a href="http://www.openstreetmap.org/' + this.type + 
+                    '/' + this.id + '" target="_blank">#' + this.id + 
+                    "</a> with tags:<ul>";
+            for(var key in this.tags) {
+                if (this.tags.hasOwnProperty(key)) {
+                    t += "<li>" + key + " = '" + this.tags[key] + "'</li>";
+                }
+            };
+            t += "</ul>";
+            t += 'by <a href="http://www.openstreetmap.org/user/' + this.user + 
+                 '" target="_blank">' + this.user + '</a> at ' + 
+                 this.timestamp + "<br/>";
+            t += 'in changeset <a href="http://www.openstreetmap.org/changeset/' + 
+                 this.changeset + '" target="_blank">#' + this.changeset + 
+                 '</a>, version ' + this.version;
+            t += '<p>Go to <a href="https://www.google.com/maps/@' + 
+                 event.latlng.lat + ',' + event.latlng.lng + 
+                 ',18z" target="_blank">GMap</a></p>';
+            console.log(this);
+            map.openPopup(t, event.latlng);
+        };
 
+/**
+ * Compute and update the icons' layer.
+ */ 
         function askForPlots() {
             map.fireEvent('dataloading'); 
             var zoom = map.getZoom();
@@ -136,7 +198,7 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
                 '["hazard"="deer"]',                // Cerf / biche
                 '["hazard"="animals_crossing"]',    // traversée d'animaux (pluriel)
                 '["hazard"="shark"]',               // requin
-                '["crocodile"="yes"]'               // crocodile
+                '["hazard"="crocodile"]'            // crocodile
             ];
             
             var url = "http://overpass-api.de/api/interpreter?data=[out:json][timeout:120];(";
@@ -144,7 +206,7 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
                 url += "node" + val + "(" + bbox + ");";
                 url += "way" + val + "(" + bbox + ");";
             });
-            url += ");out body;>;out skel qt;";
+            url += ");out meta qt;>;out skel qt;";
                    
             $.getJSON(url,
                 function(feature){
@@ -156,31 +218,19 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
 
                     var nodes = [];
                     var ways = [];
-                    var layers = [];
-                    var popup = function(event) { 
-                        console.log(event, this);
-                        var t = (this.type == "node" ? "Node" : "Way") + " with tags : <ul>";
-                        for(var key in this.tags) {
-                            if (this.tags.hasOwnProperty(key)) {
-                                t += "<li>" + key + " = '" + this.tags[key] + "'</li>";
-                            }
-                        };
-                        t += "</ul>";
-                        map.openPopup(t, event.latlng);
-                    };
-
+                    var markers = [];
+                    
                     feature.elements.forEach(function( elem ) {
                         switch (elem.type) {
                             case 'node':
                                 nodes[elem.id] = L.latLng(elem.lat, elem.lon);
                                 if ('tags' in elem) {
-                                    layers.push(L.marker(L.latLng(elem.lat, elem.lon), {
+                                    markers.push(L.marker(L.latLng(elem.lat, elem.lon), {
                                         icon: L.icon({
                                             iconUrl: 'images/' + getIconFrom(elem.tags),
                                             iconSize: [30, 27]
                                         })
-                                    }).on('click', popup, {type: 'node', tags: elem.tags}
-                                    ));
+                                    }).on('click', popup, elem));
                                 }
                                 break;
                             case 'way':
@@ -195,30 +245,38 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
                         way.nodes.forEach(function( nodeId ) {
                             latlngs.push(nodes[nodeId]);
                         });
+                        if (way.nodes[0] == way.nodes[way.nodes.length - 1]) {  // polygone
+                            var p = L.polygon(latlngs, {
+                                color: 'red',
+                                smoothFactor: 2
+                            }).on('click', popup, way);
+                            markers.push(p);
+                            var ll = p.getCenter();
+                            markers.push(L.marker(L.latLng(ll.lat, ll.lng), {
+                                icon: L.icon({
+                                    iconUrl: 'images/' + getIconFrom(way.tags),
+                                    iconSize: [30, 27]
+                                })
+                            }).on('click', popup, way));
+                        } else {        // line (polyline)
+                            markers.push(L.polyline(latlngs, {
+                                color: 'red',
+                                smoothFactor: 2
+                            }).on('click', popup, {type: 'way', tags: way.tags}
+                            ));
+                            var ll = L.GeometryUtil.interpolateOnLine(map, latlngs, 0.5).latLng;
+                            markers.push(L.marker(L.latLng(ll.lat, ll.lng), {
+                                icon: L.icon({
+                                    iconUrl: 'images/' + getIconFrom(way.tags),
+                                    iconSize: [30, 27]
+                                })
+                            }).on('click', popup, way));
+                        }
                         
-                        var ll = L.GeometryUtil.interpolateOnLine(map, latlngs, 0.5).latLng;
                         
-                        layers.push(L.polyline(latlngs, {
-                            color: 'red',
-                            smoothFactor: 2
-                        }).on('click', popup, {type: 'way', tags: way.tags}
-                        ));
-                        
-                        layers.push(L.marker(L.latLng(ll.lat, ll.lng), {
-                            icon: L.icon({
-                                iconUrl: 'images/' + getIconFrom(way.tags),
-                                iconSize: [30, 27]
-                            })
-                        }).on('click', popup, {type: 'way', tags: way.tags}
-                        ));
                     });
                     map.removeLayer(animalsLayer);
-		            animalsLayer = L.featureGroup(layers).addTo(map);
-/*
-                    animalsLayer.on('click', function(e){
-                        console.log(e);
-                    });
-*/                
+		            animalsLayer = L.featureGroup(markers).addTo(map);
                     map.fireEvent('dataload'); 
             });
         };
@@ -241,6 +299,7 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
 		});
 
    		var animalsLayer = L.featureGroup();   // vide
+        var childrenLayer = null;
    		
 
         var map;
@@ -263,6 +322,7 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
             });
     
             map.on('locationfound', function(e){
+                console.log('LocationFound', e);
                 userLocation = e;
     			var radius = e.accuracy / 2;
     //			L.marker(e.latlng).addTo(map)
@@ -271,8 +331,8 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
             });
     
             map.locate({
-                watch: true                // follow location
-//                enableHighAccuracy: true    // using GPS
+                watch: true,                // follow location
+                enableHighAccuracy: true    // using GPS
             });
 
             askForPlots();
