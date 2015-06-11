@@ -1,4 +1,4 @@
-# panneauxbiche
+# <a href="http://panneauxbiche.com">panneauxbiche</a>
 Display wild animal signs from OpenStreetMap, starting by hind, bat and toad.
 Check http://panneauxbiche.com for the real-time generated map from OpenStreetMap.
 
