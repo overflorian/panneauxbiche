@@ -125,35 +125,107 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
             }
         });    
     
-/**
- * Return an icon file name giving a tags list.
- * @param tags Object with tags as properties.
- * @return file name.
- */   
-        function getIconFrom(tags) {
-            var url = null;
-            switch (tags.hazard) {
-                case "children": url = "A13a.png"; break;
-                case "wild_animals":
-                case "animals_crossing":
-                case "deer":
-                case "animal_crossing": url = "A15b.png"; break;
-                case "moose": url = "moose.png"; break;
-                case "cyclists": url = "A21.png"; break;
-                case "horses": url = "A15c.png"; break;
-                case "pedestrians": url = "A13b.png"; break;
-                case "shark": url = "shark.png"; break;
-                case "crocodile": url = "crocodile.png"; break;
-                default : url = "A14.png";
-            }
-            return url;
-        }
-        
+    
+        var layers = [{
+            title: "Wild/crossing animals or deer",
+            request: [
+                '"hazard"="wild_animals"', '"hazard"="animal_crossing"', 
+                '"hazard"="animals_crossing"', '"hazard"="deer"'
+            ],
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/A15b.png',
+                iconSize: [30, 27]
+            }) 
+        }, {
+            title: "Moose",
+            request: '"hazard"="moose"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/moose.png',
+                iconSize: [30, 30]
+            }) 
+        }, {
+            title: "Sharks",
+            request: '"hazard"="shark"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/shark.png',
+                iconSize: [30, 30]
+            }) 
+        }, {
+            title: "Crocodiles",
+            request: '"hazard"="crocodile"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/crocodile.png',
+                iconSize: [30, 27]
+            }) 
+        }, {
+            title: "Danger(ous) children",
+            request: '"hazard"="children"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/A13a.png',
+                iconSize: [30, 27]
+            }) 
+        }, {
+            title: "Pedestrians",
+            request: '"hazard"="pedestrian"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/A13b.png',
+                iconSize: [30, 27]
+            }) 
+        }, {
+            title: "Horseriders",
+            request: '"hazard"="horses"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/A15c.png',
+                iconSize: [30, 27]
+            }) 
+        }, {
+            title: "Cyclists",
+            request: '"hazard"="cyclists"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/A21.png',
+                iconSize: [30, 27]
+            }) 
+        }, {
+            title: "Robots",
+            request: '"hazard"="robot"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/A14.png',
+                iconSize: [30, 27]
+            }) 
+        }];
+
+
 /**
  * Open a popup composed using the event & the this instance.
  * @param event The event which has been fired.
  **/  
-        function popup(event) { 
+        function onClick(event) {
+/*
+/// Ask from Mapillary 
+            $.getJSON('http://api.mapillary.com/v1/im/close?lat=' + 
+                event.latlng.lat + '&lon=' + event.latlng.lng + 
+                '&limit=5',    
+                function(data){
+                
+                    console.log(data);
+                    data.forEach(function(img){
+                        var m = L.marker([img.lat, img.lon], {
+                            icon: L.icon({
+                                iconUrl: 'http://images.mapillary.com/' + img.key + '/thumb-320.jpg'
+                            })
+                        }).addTo(map);                                
+                    });           
+            });
+*/
             var t = (this.type == "node" ? "Node" : "Way") + 
                     ' <a href="http://www.openstreetmap.org/' + this.type + 
                     '/' + this.id + '" target="_blank">#' + this.id + 
@@ -173,64 +245,50 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
             t += '<p>Go to <a href="https://www.google.com/maps/@' + 
                  event.latlng.lat + ',' + event.latlng.lng + 
                  ',18z" target="_blank">GMap</a></p>';
-            console.log(this);
             map.openPopup(t, event.latlng);
         };
-
+        
 /**
  * Compute and update the icons' layer.
  */ 
         function askForPlots() {
-            map.fireEvent('dataloading'); 
+            
             var zoom = map.getZoom();
             var bounds = map.getBounds();
             var minll = bounds.getSouthWest();
             var maxll = bounds.getNorthEast();
             var bbox = minll.lat + ',' + minll.lng + ',' + maxll.lat + ',' + maxll.lng;
-/// @see http://taginfo.openstreetmap.org/keys/?key=hazard#values
-            var selection = [
-                '["hazard"="children"]',            // enfants
-                '["hazard"="wild_animals"]',        // animaux sauvages
-                '["hazard"="moose"]',               // rênes
-                '["hazard"="animal_crossing"]',     // traversée d'animaux
-                '["hazard"="cyclists"]',            // cyclistes
-                '["hazard"="pedestrians"]',         // piétons
-                '["hazard"="deer"]',                // Cerf / biche
-                '["hazard"="animals_crossing"]',    // traversée d'animaux (pluriel)
-                '["hazard"="shark"]',               // requin
-                '["hazard"="crocodile"]'            // crocodile
-            ];
-            
-            var url = "http://overpass-api.de/api/interpreter?data=[out:json][timeout:120];(";
-            selection.forEach( function(val, key){
-                url += "node" + val + "(" + bbox + ");";
-                url += "way" + val + "(" + bbox + ");";
-            });
-            url += ");out meta qt;>;out skel qt;";
-                   
-            $.getJSON(url,
-                function(feature){
 
-                    if (feature == null) {   // surement une erreur
-                        map.fireEvent('dataload'); 
-                        return;
-                    }
-
+            layers.forEach(function(layer){
+                if (!map.hasLayer(layer.group)) return;
+                
+                map.fireEvent('dataloading'); 
+                var url = "http://overpass-api.de/api/interpreter?data=[out:json];(";
+                if (typeof layer.request == "object") {
+                    layer.request.forEach(function(req){
+                        url += "node[" + req + "](" + bbox + ");";
+                        url += "way[" + req + "](" + bbox + ");";
+                    });
+                } else {
+                    url += "node[" + layer.request + "](" + bbox + ");";
+                    url += "way[" + layer.request + "](" + bbox + ");";
+                }
+                url += ");out meta qt;>;out skel qt;";
+                            
+                $.getJSON(url, function(feature){
                     var nodes = [];
                     var ways = [];
                     var markers = [];
+                    layer.group.clearLayers();
                     
                     feature.elements.forEach(function( elem ) {
                         switch (elem.type) {
                             case 'node':
                                 nodes[elem.id] = L.latLng(elem.lat, elem.lon);
                                 if ('tags' in elem) {
-                                    markers.push(L.marker(L.latLng(elem.lat, elem.lon), {
-                                        icon: L.icon({
-                                            iconUrl: 'images/' + getIconFrom(elem.tags),
-                                            iconSize: [30, 27]
-                                        })
-                                    }).on('click', popup, elem));
+                                    layer.group.addLayer(L.marker(L.latLng(elem.lat, elem.lon), {
+                                        icon: layer.icon
+                                    }).on('click', onClick, elem));
                                 }
                                 break;
                             case 'way':
@@ -249,37 +307,35 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
                             var p = L.polygon(latlngs, {
                                 color: 'red',
                                 smoothFactor: 2
-                            }).on('click', popup, way);
-                            markers.push(p);
+                            }).on('click', onClick, way);
+                            layer.group.addLayer(p);
                             var ll = p.getCenter();
-                            markers.push(L.marker(L.latLng(ll.lat, ll.lng), {
-                                icon: L.icon({
-                                    iconUrl: 'images/' + getIconFrom(way.tags),
-                                    iconSize: [30, 27]
-                                })
-                            }).on('click', popup, way));
+                            layer.group.addLayer(L.marker(L.latLng(ll.lat, ll.lng), {
+                                icon: layer.icon
+                            }).on('click', onClick, way));
                         } else {        // line (polyline)
-                            markers.push(L.polyline(latlngs, {
+                            layer.group.addLayer(L.polyline(latlngs, {
                                 color: 'red',
                                 smoothFactor: 2
-                            }).on('click', popup, {type: 'way', tags: way.tags}
-                            ));
+                            }).on('click', onClick, way));
                             var ll = L.GeometryUtil.interpolateOnLine(map, latlngs, 0.5).latLng;
-                            markers.push(L.marker(L.latLng(ll.lat, ll.lng), {
-                                icon: L.icon({
-                                    iconUrl: 'images/' + getIconFrom(way.tags),
-                                    iconSize: [30, 27]
-                                })
-                            }).on('click', popup, way));
+                            layer.group.addLayer(L.marker(L.latLng(ll.lat, ll.lng), {
+                                icon: layer.icon
+                            }).on('click', onClick, way));
                         }
-                        
-                        
                     });
-                    map.removeLayer(animalsLayer);
-		            animalsLayer = L.featureGroup(markers).addTo(map);
                     map.fireEvent('dataload'); 
+                });            
             });
         };
+
+
+
+
+
+
+/*
+/// @see http://taginfo.openstreetmap.org/keys/?key=hazard#values
 
 /*
    		var mapboxLayer = L.tileLayer('//{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
@@ -290,7 +346,7 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
 */
 
    		var mapquestLayer = L.tileLayer('//otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
-			maxZoom: 18,
+			maxZoom: 19,
 			attribution: 'Données &copy; Les contributeurs d\'<a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
 				         '<a href="http://opendatacommons.org/licenses/odbl/1-0/">ODbL 1.0</a>, ' +
                          'Extraction avec <a href="http://overpass-api.de/">Overpass (de)</a>, ' +
@@ -298,36 +354,44 @@ OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            
             subdomains: '1234'				
 		});
 
-   		var animalsLayer = L.featureGroup();   // vide
-        var childrenLayer = null;
-   		
-
         var map;
         var hash;
+        var userLocationLayer = null;
         
         window.addEventListener('DOMContentLoaded', function(e) {
             map = L.map('map', {
-                layers: [mapquestLayer, animalsLayer],
+                layers: [mapquestLayer, layers[0].group],
                 center: [45, 2],
                 zoom: 6,
                 loadingControl: true
             });
-
+            
             map.addControl(new informationControl());
+
+            var overlays = {};
+            layers.forEach(function(layer){
+                overlays[layer.title] = layer.group;
+            });
+            map.addControl(L.control.layers({"MapQuest": mapquestLayer}, overlays, {
+                collapsed: false    
+            }));
+            
 
             hash = L.hash(map);
 
-            map.on('moveend', function(e) {
-                askForPlots();
-            });
+            map.on('overlayadd', askForPlots);
+            map.on('moveend', askForPlots);
     
             map.on('locationfound', function(e){
-                console.log('LocationFound', e);
+//                console.log('LocationFound', e);
                 userLocation = e;
     			var radius = e.accuracy / 2;
     //			L.marker(e.latlng).addTo(map)
     //				.bindPopup("Vous êtes dans un rayon de " + radius + " m.").openPopup();
-    			L.circle(e.latlng, radius).addTo(map);
+                if (userLocationLayer != null) {
+                    map.removeLayer(userLocationLayer);
+                }
+    			userLocationLayer = L.circle(e.latlng, radius).addTo(map);
             });
     
             map.locate({
