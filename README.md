@@ -13,6 +13,7 @@ I suggest you also use man_made=sign but the tags are still under discussion cf.
 
 ## License
 ''Sauf indication contraire, les textes, les images, le code publié ici est sous licence GNU GPL V3.''
+* <a href="http://fr.freepik.com/vecteurs-libre/silhouettes-collection-de-robots-de-vecteur_714902.htm">Logo de robot conçu par Freepik</a>
 
 ## [Leaflet] plugins
 - [Leaflet.loading] is free software, and may be redistributed under the MIT License.
