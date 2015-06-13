@@ -1,9 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Sauvez une biche !</title>
+	<title>Sauvez une biche ! Save a deer!</title>
 	<meta charset="utf-8" />
 	<link rel="icon" href="favicon.ico" />
+	
+	<meta name="description" content="Worldwide map of hazard signs like wild animal crossing - Carte mondiale des panneaux de danger comme ceux signalant les traversées d&#039;animaux sauvages"/>
+	<link rel="canonical" href="http://panneauxbiche.com" />
+	<meta property="og:title" content="Sauvez une biche ! Save a deer!" />
+	<meta property="og:description" content="Worldwide map of hazard signs like wild animal crossing - Carte mondiale des panneaux de danger comme ceux signalant les traversées d&#039;animaux sauvages" />
+	<meta property="og:url" content="http://panneauxbiche.com" />
+	<meta property="og:site_name" content="Panneaux Biche DOT COM" />
+	<meta property="og:image" content="http://panneauxbiche.com/images/panneauxbiche_200px.png" />
+
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
     <script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
@@ -92,32 +101,29 @@
                     console.log(map);
                     map.fire('modal', {
                         content: '                                              \
-<h1>Sauvez une biche...</h1>                                                    \
+<h1>Sauvez une biche ! Save a deer!</h1>                                        \
                                                                                 \
 <img src="images/panneauxbiche_200px.png" alt="Panneau Biche"                   \
 style="float:right"/>                                                           \
                                                                                 \
-<p>Display wild animal signs from OpenStreetMap, starting by hind, bat and toad.\
-Check <a href="http://panneauxbiche.com">http://panneauxbiche.com</a> for the   \
-real-time generated map from OpenStreetMap.</p>                                 \
+<p>Worldwide map of hazard signs and areas like wild animal crossing. Mapped in \
+<a href="http://www.openstreetmap.org">OpenStreetMap</a>.</p>                   \
+                                                                                \
+<p>Carte mondiale des panneaux et des zones de danger comme ceux signalant les  \
+traversées d&#039;animaux sauvages. Cartographié dans                           \
+<a href="http://www.openstreetmap.org">OpenStreetMap</a>.</p>                   \
                                                                                 \
 <p>This project started (as a joke) in may 2015 at SoTM-fr in Brest and the goal\
-is to display all A15b road signs. <i>Cf.</i>                                   \
-<a href="https://fr.wikipedia.org/wiki/Panneau_signalant_le_passage_d%27animaux_sauvages_en_France">Wikipedia.org \
-- Panneau signalant le passage d&quote;animaux sauvages en France</a></p>       \
+is to display all <a href="https://fr.wikipedia.org/wiki/Panneau_signalant_le_passage_d%27animaux_sauvages_en_France">A15b</a> road signs.</p>                                                       \
+                                                                                \
+<p>Now it is much more than that with a lot of extra signs including robots!</p>\
                                                                                 \
 <p>Check out our Twitter feed for hot news:                                     \
-<a href="https://twitter.com/panneauxbiche">Twitter.com - panneauxbiche</a></p> \
+<a href="https://twitter.com/panneauxbiche">@PanneauxBiche</a></p>              \
                                                                                 \
-<p>If you&quote;d like to map the sign in OSM, please use hazard=animal_crossing.   \
-You can also specify the animal species with species=* <i>cf.</i>               \
-<a href="http://wiki.openstreetmap.org/wiki/Key:species">Wiki OpenStreetMap.org \
-- Key:species</a></p>                                                           \
-                                                                                \
-<p>I suggest you also use man_made=sign but the tags are still under discussion \
-<i>cf.</i>                                                                      \
-<a href="http://wiki.openstreetmap.org/wiki/Proposed_features/hazard#Animal_crossign">Wiki \
-OpenStreetMap.org - Proposed features/hazard#Animal_crossign</a></p>            \
+<p>If you&quote;d like to map the sign in OSM, please use hazard=animal_crossing. \
+<p>Made by <a href="https://twitter.com/overflorian">Florian</a> and            \
+<a href="https://twitter.com/marcussacapuces">Marc</a>.</p>                      \
 '
                     });
                 };
