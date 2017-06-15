@@ -14,30 +14,33 @@
 	<meta property="og:image" content="http://panneauxbiche.com/images/panneauxbiche_200px.png" />
 
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
-    <script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
 
-    <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-hash/v0.2.1/leaflet-hash.js'></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css"
+    integrity="sha512-07I2e+7D8p6he1SIM+1twR5TIrhUQn9+I6yjqD53JQjFiMf8EtC93ty0/5vJTZGF8aAocvHYNEDJajGdNx1IsQ=="
+    crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"
+    integrity="sha512-A7vV8IFfih/D732iSSKi20u/ooOfj/AGehOKq0f4vLT1Zr2Y+RX7C+w8A1gaSasGtRUZpF/NZgzSAu4/Gc41Lg=="
+    crossorigin=""></script>
+  <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-hash/v0.2.1/leaflet-hash.js'></script>
 
-    <link rel="stylesheet" href="css/leaflet.modal.min.css" />
-    <script type="text/javascript" src="js/Leaflet.Modal.min.js"></script>
-    
+  <link rel="stylesheet" href="css/leaflet.modal.min.css" />
+  <script src="js/Leaflet.Modal.min.js"></script>
+  
 <!-- Include the loading control -->
-    <link rel="stylesheet" href="css/Control.Loading.css" />
-    <script src="js/Control.Loading.js"></script>
-    
-    <script src="js/leaflet.geometryutil.js"></script>
-    
+  <link rel="stylesheet" href="css/Control.Loading.css" />
+  <script src="js/Control.Loading.js"></script>
+  
+  <script src="js/leaflet.geometryutil.js"></script>
 
-    <style>
-		body {
-			padding: 0;
-			margin: 0;
-		}
-		html, body, #map {
-			height: 100%;
-		}
-    </style>
+  <style>
+body {
+	padding: 0;
+	margin: 0;
+}
+html, body, #map {
+	height: 100%;
+}
+  </style>
 
 
 </head>
@@ -45,7 +48,8 @@
 
     <div id="map"></div>
 
-    <script>
+<!--
+    <x-script>
 
 /**
  * This is a method of the L.Polygon object which returns the position of the 
@@ -77,182 +81,6 @@
             );
         }
 
-/**
- * Instance of "i" control which show some informations.
- */ 
-        var informationControl = L.Control.extend({
-            options: {
-                position: 'topright' 
-                //control position - allowed: 'topleft', 'topright', 'bottomleft', 'bottomright'
-            },
-            onAdd: function (map) {
-                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
-                
-                container.style.backgroundColor = 'white';
-                container.style.backgroundImage = "url(images/information.png)";
-                container.style.backgroundSize = "30px 30px";
-                container.style.width = '30px';
-                container.style.height = '30px';
-                
-                container.onclick = function(e) {
-
-                    console.log('buttonClicked');
-                    console.log(e);
-                    console.log(map);
-                    map.fire('modal', {
-                        content: '                                              \
-<h1>Sauvez une biche ! Save a deer!</h1>                                        \
-                                                                                \
-<img src="images/panneauxbiche_200px.png" alt="Panneau Biche"                   \
-style="float:right"/>                                                           \
-                                                                                \
-<p>Worldwide map of hazard signs and areas like wild animal crossing. Mapped in \
-<a href="http://www.openstreetmap.org">OpenStreetMap</a>.</p>                   \
-                                                                                \
-<p>Carte mondiale des panneaux et des zones de danger comme ceux signalant les  \
-traversées d&#039;animaux sauvages. Cartographié dans                           \
-<a href="http://www.openstreetmap.org">OpenStreetMap</a>.</p>                   \
-                                                                                \
-<p>This project started (as a joke) in may 2015 at SoTM-fr in Brest and the goal\
-is to display all <a href="https://fr.wikipedia.org/wiki/Panneau_signalant_le_passage_d%27animaux_sauvages_en_France">A15b</a> road signs.</p>                                                       \
-                                                                                \
-<p>Now it is much more than that with a lot of extra signs including robots!</p>\
-                                                                                \
-<p>Check out our Twitter feed for hot news:                                     \
-<a href="https://twitter.com/panneauxbiche">@PanneauxBiche</a></p>              \
-                                                                                \
-<p>If you&quote;d like to map the sign in OSM, please use hazard=animal_crossing. \
-<p>Made by <a href="https://twitter.com/overflorian">Florian</a> and            \
-<a href="https://twitter.com/marcussacapuces">Marc</a>.</p>                      \
-'
-                    });
-                };
-                return container;
-            }
-        });    
-    
-    
-        var layers = [{
-            title: "Wild/crossing animals or deer",
-            request: [
-                '"hazard"="wild_animals"', '"hazard"="animal_crossing"', 
-                '"hazard"="animals_crossing"', '"hazard"="deer"'
-            ],
-            group: L.featureGroup(), 
-            icon: L.icon({
-                iconUrl: 'images/A15b.png',
-                iconSize: [30, 27]
-            }) 
-        }, {
-            title: "Moose",
-            request: '"hazard"="moose"',
-            group: L.featureGroup(), 
-            icon: L.icon({
-                iconUrl: 'images/moose.png',
-                iconSize: [30, 30]
-            }) 
-        }, {
-            title: "Sharks",
-            request: '"hazard"="shark"',
-            group: L.featureGroup(), 
-            icon: L.icon({
-                iconUrl: 'images/shark.png',
-                iconSize: [30, 30]
-            }) 
-        }, {
-            title: "Crocodiles",
-            request: '"hazard"="crocodile"',
-            group: L.featureGroup(), 
-            icon: L.icon({
-                iconUrl: 'images/crocodile.png',
-                iconSize: [30, 27]
-            }) 
-        }, {
-            title: "Danger(ous) children",
-            request: '"hazard"="children"',
-            group: L.featureGroup(), 
-            icon: L.icon({
-                iconUrl: 'images/A13a.png',
-                iconSize: [30, 27]
-            }) 
-        }, {
-            title: "Pedestrians",
-            request: '"hazard"="pedestrian"',
-            group: L.featureGroup(), 
-            icon: L.icon({
-                iconUrl: 'images/A13b.png',
-                iconSize: [30, 27]
-            }) 
-        }, {
-            title: "Horseriders",
-            request: '"hazard"="horses"',
-            group: L.featureGroup(), 
-            icon: L.icon({
-                iconUrl: 'images/A15c.png',
-                iconSize: [30, 27]
-            }) 
-        }, {
-            title: "Cyclists",
-            request: '"hazard"="cyclists"',
-            group: L.featureGroup(), 
-            icon: L.icon({
-                iconUrl: 'images/A21.png',
-                iconSize: [30, 27]
-            }) 
-        }, {
-            title: "Robots",
-            request: '"hazard"="robot"',
-            group: L.featureGroup(), 
-            icon: L.icon({
-                iconUrl: 'images/robot.png',
-                iconSize: [30, 27]
-            }) 
-        }];
-
-
-/**
- * Open a popup composed using the event & the this instance.
- * @param event The event which has been fired.
- **/  
-        function onClick(event) {
-/*
-/// Ask from Mapillary 
-            $.getJSON('http://api.mapillary.com/v1/im/close?lat=' + 
-                event.latlng.lat + '&lon=' + event.latlng.lng + 
-                '&limit=5',    
-                function(data){
-                
-                    console.log(data);
-                    data.forEach(function(img){
-                        var m = L.marker([img.lat, img.lon], {
-                            icon: L.icon({
-                                iconUrl: 'http://images.mapillary.com/' + img.key + '/thumb-320.jpg'
-                            })
-                        }).addTo(map);                                
-                    });           
-            });
-*/
-            var t = (this.type == "node" ? "Node" : "Way") + 
-                    ' <a href="http://www.openstreetmap.org/' + this.type + 
-                    '/' + this.id + '" target="_blank">#' + this.id + 
-                    "</a> with tags:<ul>";
-            for(var key in this.tags) {
-                if (this.tags.hasOwnProperty(key)) {
-                    t += "<li>" + key + " = '" + this.tags[key] + "'</li>";
-                }
-            };
-            t += "</ul>";
-            t += 'by <a href="http://www.openstreetmap.org/user/' + this.user + 
-                 '" target="_blank">' + this.user + '</a> at ' + 
-                 this.timestamp + "<br/>";
-            t += 'in changeset <a href="http://www.openstreetmap.org/changeset/' + 
-                 this.changeset + '" target="_blank">#' + this.changeset + 
-                 '</a>, version ' + this.version;
-            t += '<p>Go to <a href="https://www.google.com/maps/@' + 
-                 event.latlng.lat + ',' + event.latlng.lng + 
-                 ',18z" target="_blank">GMap</a></p>';
-            map.openPopup(t, event.latlng);
-        };
         
 /**
  * Compute and update the icons' layer.
@@ -304,6 +132,7 @@ is to display all <a href="https://fr.wikipedia.org/wiki/Panneau_signalant_le_pa
                                 console.log('type error');
                         }
                     });
+                    
                     ways.forEach(function( way ) {
                         var latlngs = [];
                         way.nodes.forEach(function( nodeId ) {
@@ -351,6 +180,7 @@ is to display all <a href="https://fr.wikipedia.org/wiki/Panneau_signalant_le_pa
 		});
 */
 
+/*
    		var mapquestLayer = L.tileLayer('//otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
 			maxZoom: 19,
 			attribution: 'Données &copy; Les contributeurs d\'<a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
@@ -359,6 +189,17 @@ is to display all <a href="https://fr.wikipedia.org/wiki/Panneau_signalant_le_pa
                          'Tiles Courtesy of <a href="http://www.mapquest.com/" target="_blank">MapQuest</a> <img src="http://developer.mapquest.com/content/osm/mq_logo.png">',
             subdomains: '1234'				
 		});
+*/
+   		var stamenLayer = L.tileLayer('http://{s}.tile.stamen.com/toner-lite/{z}/{x}/{y}.png', {
+			maxZoom: 19,
+			attribution: 'Données &copy; Les contributeurs d\'<a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
+				         '<a href="http://opendatacommons.org/licenses/odbl/1-0/">ODbL 1.0</a>, ' +
+                         'Extraction avec <a href="http://overpass-api.de/">Overpass (de)</a>, ' +
+                         '<a href="http://maps.stamen.com/" target="_blank">Map tiles</a> by <a href="http://stamen.com/" target="_blank">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0" target="_blank">CC BY 3.0</a>'
+		});
+
+//   		var image = L.imageOverlay('http://panneauxbiche.com/calcul.php', [[-89.5,-180],[89.5,180]]);
+
 
         var map;
         var hash;
@@ -366,7 +207,7 @@ is to display all <a href="https://fr.wikipedia.org/wiki/Panneau_signalant_le_pa
         
         window.addEventListener('DOMContentLoaded', function(e) {
             map = L.map('map', {
-                layers: [mapquestLayer, layers[0].group],
+                layers: [stamenLayer, layers[0].group],
                 center: [45, 2],
                 zoom: 6,
                 loadingControl: true
@@ -375,11 +216,12 @@ is to display all <a href="https://fr.wikipedia.org/wiki/Panneau_signalant_le_pa
             map.addControl(new informationControl());
 
             var overlays = {};
+//            overlays['Image'] = image;
             layers.forEach(function(layer){
                 overlays[layer.title] = layer.group;
             });
-            map.addControl(L.control.layers({"MapQuest": mapquestLayer}, overlays, {
-                collapsed: false    
+            map.addControl(L.control.layers({'Stamen': stamenLayer}, overlays, {
+                collapsed: true    
             }));
             
 
@@ -424,9 +266,164 @@ Passer à photon.komoot.de avec autocomplétion
 
 
 
-    </script>
+    </x-script>
+-->
 
-    <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
-    <!-- script src="./jquery/jquery.csv-0.71.min.js"></script -->
+<!--  <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script> -->
+  <script
+    src="https://code.jquery.com/jquery-3.2.1.min.js"
+    integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+    crossorigin="anonymous"></script>
+  <script type="text/javascript">
+
+/**
+ * Instance of "i" control which show some informations.
+ */ 
+var informationControl = L.Control.extend({
+    options: {
+        position: 'topright' 
+        //control position - allowed: 'topleft', 'topright', 'bottomleft', 'bottomright'
+    },
+    onAdd: function (map) {
+        var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+        
+        container.style.backgroundColor = 'white';
+        container.style.backgroundImage = "url(images/information.png)";
+        container.style.backgroundSize = "30px 30px";
+        container.style.width = '30px';
+        container.style.height = '30px';
+        
+        container.onclick = function(e) {
+            map.fire('modal', {
+                content: 
+'<h1>Sauvez une biche ! Save a deer!</h1>\n' +
+'\n' +                                                                              
+'<img src="images/panneauxbiche_200px.png" alt="Panneau Biche" ' +
+' style="float:right"/>\n' +                                                           
+'\n' +                                                                                
+'<p>Worldwide map of hazard signs and areas like wild animal crossing. Mapped in ' +
+'<a href="http://www.openstreetmap.org">OpenStreetMap</a>.</p>\n' +                   
+'\n' +                                                                                
+'<p>Carte mondiale des panneaux et des zones de danger comme ceux signalant les ' +
+'traversées d&#039;animaux sauvages. Cartographié dans ' +                           
+'<a href="http://www.openstreetmap.org">OpenStreetMap</a>.</p>\n' +
+'\n' +                   
+'<p>This project started (as a joke) in may 2015 at SoTM-fr in Brest and the goal ' +
+' is to display all <a href="https://fr.wikipedia.org/wiki/Panneau_signalant_le_passage_d%27animaux_sauvages_en_France">A15b</a> road signs.</p>\n' +
+'\n' +                                                                                 
+'<p>Now it is much more than that with a lot of extra signs including robots!</p>\n' +
+'\n' +                                                                                
+'<p>Check out our Twitter feed for hot news:\n' +                                     
+'<a href="https://twitter.com/panneauxbiche">@PanneauxBiche</a></p>\n' +           
+'\n' +                                                                               
+'<p>If you\'d like to map the sign in OSM, please use hazard=animal_crossing.\n' +
+'<p>Made by <a href="https://twitter.com/overflorian">Florian</a> and ' +
+'<a href="https://twitter.com/marcussacapuces">Marc</a>.</p>'
+            });
+        };
+        return container;
+    }
+});    
+
+function dessiner(bbox, title, iconUrl, iconSize) {
+  var icon = new L.Icon({
+    iconUrl: iconUrl,
+    iconSize: iconSize
+  });
+
+  var layer = new L.geoJSON(null, {
+    pointToLayer: function(feature, latlng) {
+      return L.marker(latlng, { icon: icon });
+    },
+    onEachFeature: function(feature, layer){
+      var t = (feature.properties.type == "node" ? "Node" : "Way") + 
+              ' <a href="http://www.openstreetmap.org/' + feature.properties.type + 
+              '/' + feature.properties.id + '" target="_blank">#' + feature.properties.id + 
+              "</a> with tags:<ul>";
+      for(var key in feature.properties.tags) {
+          if (feature.properties.tags.hasOwnProperty(key)) {
+              t += "<li>" + key + " = '" + feature.properties.tags[key] + "'</li>";
+          }
+      };
+      t += "</ul>";
+      t += 'by <a href="http://www.openstreetmap.org/user/' + feature.properties.user + 
+           '" target="_blank">' + feature.properties.user + '</a> at ' + 
+           feature.properties.timestamp + "<br/>";
+      t += 'in changeset <a href="http://www.openstreetmap.org/changeset/' + 
+           feature.properties.changeset + '" target="_blank">#' + feature.properties.changeset + 
+           '</a>, version ' + feature.properties.version;
+      layer.bindPopup(t);
+    },
+    style: { 
+      color: 'red',
+      smoothFactor: 2
+    }
+  });
+
+  var jqxhr = $.ajax('http://panneauxbiche.com/couches.php', {
+    dataType: "json",
+    data: { 
+      layer: title,  
+      bbox: bbox,
+    },
+    success: function(json){
+      layer.addData(json);      
+    }
+  });
+
+  return layer;
+}
+  
+  
+<!--
+ 
+--> 
+$(function() {
+  var map = L.map('map', {
+    center: [45, 2],
+    zoom: 6,
+    loadingControl: true
+  });
+  map.addControl(new informationControl());
+  var controlLayer = new L.control.layers();
+  map.addControl(controlLayer);
+  var hash = L.hash(map);
+    
+  var bounds = map.getBounds().toBBoxString();
+
+  var layers = []; // global
+
+  var jqxhr = $.getJSON(
+    'http://panneauxbiche.com/couches.php', 
+    function(data) {
+      var first;
+//      map.fireEvent('dataloading'); 
+      
+      data.forEach(function(entry){
+        layers[entry.title] = dessiner(map.getBounds().toBBoxString(), entry.title, entry.iconUrl, entry.iconSize);
+        if (!first) {
+          first = entry;
+          layers[entry.title].addTo(map);
+        }
+        controlLayer.addOverlay(layers[entry.title], entry.title);
+      });
+      
+//      map.fireEvent('dataload');       
+    }
+  );
+
+  var stamenLayer = L.tileLayer('http://{s}.tile.stamen.com/toner-lite/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: 
+      'Données &copy; Les contributeurs d\'<a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
+    	'<a href="http://opendatacommons.org/licenses/odbl/1-0/">ODbL 1.0</a>, ' +
+      'Extraction avec <a href="http://overpass-api.de/">Overpass (de)</a>, ' +
+      '<a href="http://maps.stamen.com/" target="_blank">Map tiles</a> by <a href="http://stamen.com/" target="_blank">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0" target="_blank">CC BY 3.0</a>'
+  }).addTo(map);
+  
+  controlLayer.addBaseLayer(stamenLayer, 'Stamen');
+
+});
+  </script>
 </body>
 </html>

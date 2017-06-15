@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Sauvez une biche ! Save a deer!</title>
+	<meta charset="utf-8" />
+	<link rel="icon" href="favicon.ico" />
+	
+	<meta name="description" content="Worldwide map of hazard signs like wild animal crossing - Carte mondiale des panneaux de danger comme ceux signalant les traversées d&#039;animaux sauvages"/>
+	<link rel="canonical" href="http://panneauxbiche.com" />
+	<meta property="og:title" content="Sauvez une biche ! Save a deer!" />
+	<meta property="og:description" content="Worldwide map of hazard signs like wild animal crossing - Carte mondiale des panneaux de danger comme ceux signalant les traversées d&#039;animaux sauvages" />
+	<meta property="og:url" content="http://panneauxbiche.com" />
+	<meta property="og:site_name" content="Panneaux Biche DOT COM" />
+	<meta property="og:image" content="http://panneauxbiche.com/images/panneauxbiche_200px.png" />
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css"
+    integrity="sha512-07I2e+7D8p6he1SIM+1twR5TIrhUQn9+I6yjqD53JQjFiMf8EtC93ty0/5vJTZGF8aAocvHYNEDJajGdNx1IsQ=="
+    crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"
+    integrity="sha512-A7vV8IFfih/D732iSSKi20u/ooOfj/AGehOKq0f4vLT1Zr2Y+RX7C+w8A1gaSasGtRUZpF/NZgzSAu4/Gc41Lg=="
+    crossorigin=""></script>
+  <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-hash/v0.2.1/leaflet-hash.js'></script>
+
+  <link rel="stylesheet" href="css/leaflet.modal.min.css" />
+  <script type="text/javascript" src="js/Leaflet.Modal.min.js"></script>
+  
+<!-- Include the loading control -->
+  <link rel="stylesheet" href="css/Control.Loading.css" />
+  <script src="js/Control.Loading.js"></script>
+  
+  <script src="js/leaflet.geometryutil.js"></script>
+
+  <style>
+body {
+	padding: 0;
+	margin: 0;
+}
+html, body, #map {
+	height: 100%;
+}
+  </style>
+
+
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <script>
+
+/**
+ * This is a method of the L.Polygon object which returns the position of the 
+ * "middle" of the polygon.
+ * The returned position might not be inside the polygon.
+ * @return latlng coordonates of the position.  
+ */
+        L.Polygon.prototype.getCenter = function() {
+            var pts = this._latlngs;
+            var off = pts[0];
+            var twicearea = 0;
+            var x = 0;
+            var y = 0;
+            var nPts = pts.length;
+            var p1, p2;
+            var f;
+            for (var i = 0, j = nPts - 1; i < nPts; j = i++) {
+                p1 = pts[i];
+                p2 = pts[j];
+                f = (p1.lat - off.lat) * (p2.lng - off.lng) - (p2.lat - off.lat) * (p1.lng - off.lng);
+                twicearea += f;
+                x += (p1.lat + p2.lat - 2 * off.lat) * f;
+                y += (p1.lng + p2.lng - 2 * off.lng) * f;
+            }
+            f = twicearea * 3;
+            return new L.LatLng(
+                x / f + off.lat,
+                y / f + off.lng
+            );
+        }
+
+/**
+ * Instance of "i" control which show some informations.
+ */ 
+        var informationControl = L.Control.extend({
+            options: {
+                position: 'topright' 
+                //control position - allowed: 'topleft', 'topright', 'bottomleft', 'bottomright'
+            },
+            onAdd: function (map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+                
+                container.style.backgroundColor = 'white';
+                container.style.backgroundImage = "url(images/information.png)";
+                container.style.backgroundSize = "30px 30px";
+                container.style.width = '30px';
+                container.style.height = '30px';
+                
+                container.onclick = function(e) {
+
+                    console.log('buttonClicked');
+                    console.log(e);
+                    console.log(map);
+                    map.fire('modal', {
+                        content: '                                              \
+<h1>Sauvez une biche ! Save a deer!</h1>                                        \
+                                                                                \
+<img src="images/panneauxbiche_200px.png" alt="Panneau Biche"                   \
+style="float:right"/>                                                           \
+                                                                                \
+<p>Worldwide map of hazard signs and areas like wild animal crossing. Mapped in \
+<a href="http://www.openstreetmap.org">OpenStreetMap</a>.</p>                   \
+                                                                                \
+<p>Carte mondiale des panneaux et des zones de danger comme ceux signalant les  \
+traversées d&#039;animaux sauvages. Cartographié dans                           \
+<a href="http://www.openstreetmap.org">OpenStreetMap</a>.</p>                   \
+                                                                                \
+<p>This project started (as a joke) in may 2015 at SoTM-fr in Brest and the goal\
+is to display all <a href="https://fr.wikipedia.org/wiki/Panneau_signalant_le_passage_d%27animaux_sauvages_en_France">A15b</a> road signs.</p>                                                       \
+                                                                                \
+<p>Now it is much more than that with a lot of extra signs including robots!</p>\
+                                                                                \
+<p>Check out our Twitter feed for hot news:                                     \
+<a href="https://twitter.com/panneauxbiche">@PanneauxBiche</a></p>              \
+                                                                                \
+<p>If you\'d like to map the sign in OSM, please use hazard=animal_crossing. \
+<p>Made by <a href="https://twitter.com/overflorian">Florian</a> and            \
+<a href="https://twitter.com/marcussacapuces">Marc</a>.</p>                      \
+'
+                    });
+                };
+                return container;
+            }
+        });    
+    
+    
+        var layers = [{
+            title: "Wild/crossing animals or deer",
+            request: [
+                '"hazard"="wild_animals"', '"hazard"="animal_crossing"', 
+                '"hazard"="animals_crossing"', '"hazard"="deer"'
+            ],
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/A15b.png',
+                iconSize: [30, 27]
+            }) 
+        }, {
+            title: "Moose",
+            request: '"hazard"="moose"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/moose.png',
+                iconSize: [30, 30]
+            }) 
+        }, {
+            title: "Sharks",
+            request: '"hazard"="shark"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/shark.png',
+                iconSize: [30, 30]
+            }) 
+        }, {
+            title: "Crocodiles",
+            request: '"hazard"="crocodile"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/crocodile.png',
+                iconSize: [30, 27]
+            }) 
+        }, {
+            title: "Danger(ous) children",
+            request: '"hazard"="children"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/A13a.png',
+                iconSize: [30, 27]
+            }) 
+        }, {
+            title: "Pedestrians",
+            request: '"hazard"="pedestrian"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/A13b.png',
+                iconSize: [30, 27]
+            }) 
+        }, {
+            title: "Horseriders",
+            request: '"hazard"="horses"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/A15c.png',
+                iconSize: [30, 27]
+            }) 
+        }, {
+            title: "Cyclists",
+            request: '"hazard"="cyclists"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/A21.png',
+                iconSize: [30, 27]
+            }) 
+        }, {
+            title: "Robots",
+            request: '"hazard"="robot"',
+            group: L.featureGroup(), 
+            icon: L.icon({
+                iconUrl: 'images/robot.png',
+                iconSize: [30, 27]
+            }) 
+        }];
+
+
+/**
+ * Open a popup composed using the event & the this instance.
+ * @param event The event which has been fired.
+ **/  
+        function onClick(event) {
+/*
+/// Ask from Mapillary 
+            $.getJSON('http://api.mapillary.com/v1/im/close?lat=' + 
+                event.latlng.lat + '&lon=' + event.latlng.lng + 
+                '&limit=5',    
+                function(data){
+                
+                    console.log(data);
+                    data.forEach(function(img){
+                        var m = L.marker([img.lat, img.lon], {
+                            icon: L.icon({
+                                iconUrl: 'http://images.mapillary.com/' + img.key + '/thumb-320.jpg'
+                            })
+                        }).addTo(map);                                
+                    });           
+            });
+*/
+            var t = (this.type == "node" ? "Node" : "Way") + 
+                    ' <a href="http://www.openstreetmap.org/' + this.type + 
+                    '/' + this.id + '" target="_blank">#' + this.id + 
+                    "</a> with tags:<ul>";
+            for(var key in this.tags) {
+                if (this.tags.hasOwnProperty(key)) {
+                    t += "<li>" + key + " = '" + this.tags[key] + "'</li>";
+                }
+            };
+            t += "</ul>";
+            t += 'by <a href="http://www.openstreetmap.org/user/' + this.user + 
+                 '" target="_blank">' + this.user + '</a> at ' + 
+                 this.timestamp + "<br/>";
+            t += 'in changeset <a href="http://www.openstreetmap.org/changeset/' + 
+                 this.changeset + '" target="_blank">#' + this.changeset + 
+                 '</a>, version ' + this.version;
+            t += '<p>Go to <a href="https://www.google.com/maps/@' + 
+                 event.latlng.lat + ',' + event.latlng.lng + 
+                 ',18z" target="_blank">GMap</a></p>';
+            map.openPopup(t, event.latlng);
+        };
+        
+/**
+ * Compute and update the icons' layer.
+ */ 
+        function askForPlots() {
+            
+            var zoom = map.getZoom();
+            var bounds = map.getBounds();
+            var minll = bounds.getSouthWest();
+            var maxll = bounds.getNorthEast();
+            var bbox = minll.lat + ',' + minll.lng + ',' + maxll.lat + ',' + maxll.lng;
+
+            layers.forEach(function(layer){
+                if (!map.hasLayer(layer.group)) return;
+                
+                map.fireEvent('dataloading'); 
+                var url = "http://overpass-api.de/api/interpreter?data=[out:json];(";
+                if (typeof layer.request == "object") {
+                    layer.request.forEach(function(req){
+                        url += "node[" + req + "](" + bbox + ");";
+                        url += "way[" + req + "](" + bbox + ");";
+                    });
+                } else {
+                    url += "node[" + layer.request + "](" + bbox + ");";
+                    url += "way[" + layer.request + "](" + bbox + ");";
+                }
+                url += ");out meta qt;>;out skel qt;";
+                            
+                $.getJSON(url, function(feature){
+                    var nodes = [];
+                    var ways = [];
+                    var markers = [];
+                    layer.group.clearLayers();
+                    
+                    feature.elements.forEach(function( elem ) {
+                        switch (elem.type) {
+                            case 'node':
+                                nodes[elem.id] = L.latLng(elem.lat, elem.lon);
+                                if ('tags' in elem) {
+                                    layer.group.addLayer(L.marker(L.latLng(elem.lat, elem.lon), {
+                                        icon: layer.icon
+                                    }).on('click', onClick, elem));
+                                }
+                                break;
+                            case 'way':
+                                if ('tags' in elem) ways.push(elem);
+                                break;
+                            default:
+                                console.log('type error');
+                        }
+                    });
+                    
+                    ways.forEach(function( way ) {
+                        var latlngs = [];
+                        way.nodes.forEach(function( nodeId ) {
+                            latlngs.push(nodes[nodeId]);
+                        });
+                        if (way.nodes[0] == way.nodes[way.nodes.length - 1]) {  // polygone
+                            var p = L.polygon(latlngs, {
+                                color: 'red',
+                                smoothFactor: 2
+                            }).on('click', onClick, way);
+                            layer.group.addLayer(p);
+                            var ll = p.getCenter();
+                            layer.group.addLayer(L.marker(L.latLng(ll.lat, ll.lng), {
+                                icon: layer.icon
+                            }).on('click', onClick, way));
+                        } else {        // line (polyline)
+                            layer.group.addLayer(L.polyline(latlngs, {
+                                color: 'red',
+                                smoothFactor: 2
+                            }).on('click', onClick, way));
+                            var ll = L.GeometryUtil.interpolateOnLine(map, latlngs, 0.5).latLng;
+                            layer.group.addLayer(L.marker(L.latLng(ll.lat, ll.lng), {
+                                icon: layer.icon
+                            }).on('click', onClick, way));
+                        }
+                    });
+                    map.fireEvent('dataload'); 
+                });            
+            });
+        };
+
+
+
+
+
+
+/*
+/// @see http://taginfo.openstreetmap.org/keys/?key=hazard#values
+
+/*
+   		var mapboxLayer = L.tileLayer('//{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+			id: 'examples.map-i875mjb7'
+		});
+*/
+
+/*
+   		var mapquestLayer = L.tileLayer('//otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
+			maxZoom: 19,
+			attribution: 'Données &copy; Les contributeurs d\'<a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
+				         '<a href="http://opendatacommons.org/licenses/odbl/1-0/">ODbL 1.0</a>, ' +
+                         'Extraction avec <a href="http://overpass-api.de/">Overpass (de)</a>, ' +
+                         'Tiles Courtesy of <a href="http://www.mapquest.com/" target="_blank">MapQuest</a> <img src="http://developer.mapquest.com/content/osm/mq_logo.png">',
+            subdomains: '1234'				
+		});
+*/
+   		var stamenLayer = L.tileLayer('http://{s}.tile.stamen.com/toner-lite/{z}/{x}/{y}.png', {
+			maxZoom: 19,
+			attribution: 'Données &copy; Les contributeurs d\'<a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
+				         '<a href="http://opendatacommons.org/licenses/odbl/1-0/">ODbL 1.0</a>, ' +
+                         'Extraction avec <a href="http://overpass-api.de/">Overpass (de)</a>, ' +
+                         '<a href="http://maps.stamen.com/" target="_blank">Map tiles</a> by <a href="http://stamen.com/" target="_blank">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0" target="_blank">CC BY 3.0</a>'
+		});
+
+//   		var image = L.imageOverlay('http://panneauxbiche.com/calcul.php', [[-89.5,-180],[89.5,180]]);
+
+
+        var map;
+        var hash;
+        var userLocationLayer = null;
+        
+        window.addEventListener('DOMContentLoaded', function(e) {
+            map = L.map('map', {
+                layers: [stamenLayer, layers[0].group],
+                center: [45, 2],
+                zoom: 6,
+                loadingControl: true
+            });
+            
+            map.addControl(new informationControl());
+
+            var overlays = {};
+//            overlays['Image'] = image;
+            layers.forEach(function(layer){
+                overlays[layer.title] = layer.group;
+            });
+            map.addControl(L.control.layers({'Stamen': stamenLayer}, overlays, {
+                collapsed: true    
+            }));
+            
+
+            hash = L.hash(map);
+
+            map.on('overlayadd', askForPlots);
+            map.on('moveend', askForPlots);
+    
+            map.on('locationfound', function(e){
+//                console.log('LocationFound', e);
+                userLocation = e;
+    			var radius = e.accuracy / 2;
+    //			L.marker(e.latlng).addTo(map)
+    //				.bindPopup("Vous êtes dans un rayon de " + radius + " m.").openPopup();
+                if (userLocationLayer != null) {
+                    map.removeLayer(userLocationLayer);
+                }
+    			userLocationLayer = L.circle(e.latlng, radius).addTo(map);
+            });
+    
+            map.locate({
+                watch: true,                // follow location
+                enableHighAccuracy: true    // using GPS
+            });
+
+            askForPlots();
+        
+        });
+
+
+
+/*
+Passer à photon.komoot.de avec autocomplétion
+
+        new L.Control.OSMGeocoder({    // https://github.com/k4r573n/leaflet-control-osm-geocoder
+        position: 'topleft',
+        text: 'Centrer',
+        email: 'panneauxbiche.com'
+        }).addTo(map);
+*/
+
+
+
+
+    </script>
+
+    <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <!-- script src="./jquery/jquery.csv-0.71.min.js"></script -->
+        
+</body>
+</html>
