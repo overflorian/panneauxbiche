@@ -25,12 +25,15 @@
 
   <link rel="stylesheet" href="css/leaflet.modal.min.css" />
   <script src="js/Leaflet.Modal.min.js"></script>
-  
-<!-- Include the loading control -->
+
   <link rel="stylesheet" href="css/Control.Loading.css" />
   <script src="js/Control.Loading.js"></script>
   
   <script src="js/leaflet.geometryutil.js"></script>
+
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"
+    integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+    crossorigin="anonymous"></script>
 
   <style>
 body {
@@ -42,239 +45,11 @@ html, body, #map {
 }
   </style>
 
-
 </head>
 <body>
+  <div id="map"></div>
 
-    <div id="map"></div>
-
-<!--
-    <x-script>
-
-/**
- * This is a method of the L.Polygon object which returns the position of the 
- * "middle" of the polygon.
- * The returned position might not be inside the polygon.
- * @return latlng coordonates of the position.  
- */
-        L.Polygon.prototype.getCenter = function() {
-            var pts = this._latlngs;
-            var off = pts[0];
-            var twicearea = 0;
-            var x = 0;
-            var y = 0;
-            var nPts = pts.length;
-            var p1, p2;
-            var f;
-            for (var i = 0, j = nPts - 1; i < nPts; j = i++) {
-                p1 = pts[i];
-                p2 = pts[j];
-                f = (p1.lat - off.lat) * (p2.lng - off.lng) - (p2.lat - off.lat) * (p1.lng - off.lng);
-                twicearea += f;
-                x += (p1.lat + p2.lat - 2 * off.lat) * f;
-                y += (p1.lng + p2.lng - 2 * off.lng) * f;
-            }
-            f = twicearea * 3;
-            return new L.LatLng(
-                x / f + off.lat,
-                y / f + off.lng
-            );
-        }
-
-        
-/**
- * Compute and update the icons' layer.
- */ 
-        function askForPlots() {
-            
-            var zoom = map.getZoom();
-            var bounds = map.getBounds();
-            var minll = bounds.getSouthWest();
-            var maxll = bounds.getNorthEast();
-            var bbox = minll.lat + ',' + minll.lng + ',' + maxll.lat + ',' + maxll.lng;
-
-            layers.forEach(function(layer){
-                if (!map.hasLayer(layer.group)) return;
-                
-                map.fireEvent('dataloading'); 
-                var url = "http://overpass-api.de/api/interpreter?data=[out:json];(";
-                if (typeof layer.request == "object") {
-                    layer.request.forEach(function(req){
-                        url += "node[" + req + "](" + bbox + ");";
-                        url += "way[" + req + "](" + bbox + ");";
-                    });
-                } else {
-                    url += "node[" + layer.request + "](" + bbox + ");";
-                    url += "way[" + layer.request + "](" + bbox + ");";
-                }
-                url += ");out meta qt;>;out skel qt;";
-                            
-                $.getJSON(url, function(feature){
-                    var nodes = [];
-                    var ways = [];
-                    var markers = [];
-                    layer.group.clearLayers();
-                    
-                    feature.elements.forEach(function( elem ) {
-                        switch (elem.type) {
-                            case 'node':
-                                nodes[elem.id] = L.latLng(elem.lat, elem.lon);
-                                if ('tags' in elem) {
-                                    layer.group.addLayer(L.marker(L.latLng(elem.lat, elem.lon), {
-                                        icon: layer.icon
-                                    }).on('click', onClick, elem));
-                                }
-                                break;
-                            case 'way':
-                                if ('tags' in elem) ways.push(elem);
-                                break;
-                            default:
-                                console.log('type error');
-                        }
-                    });
-                    
-                    ways.forEach(function( way ) {
-                        var latlngs = [];
-                        way.nodes.forEach(function( nodeId ) {
-                            latlngs.push(nodes[nodeId]);
-                        });
-                        if (way.nodes[0] == way.nodes[way.nodes.length - 1]) {  // polygone
-                            var p = L.polygon(latlngs, {
-                                color: 'red',
-                                smoothFactor: 2
-                            }).on('click', onClick, way);
-                            layer.group.addLayer(p);
-                            var ll = p.getCenter();
-                            layer.group.addLayer(L.marker(L.latLng(ll.lat, ll.lng), {
-                                icon: layer.icon
-                            }).on('click', onClick, way));
-                        } else {        // line (polyline)
-                            layer.group.addLayer(L.polyline(latlngs, {
-                                color: 'red',
-                                smoothFactor: 2
-                            }).on('click', onClick, way));
-                            var ll = L.GeometryUtil.interpolateOnLine(map, latlngs, 0.5).latLng;
-                            layer.group.addLayer(L.marker(L.latLng(ll.lat, ll.lng), {
-                                icon: layer.icon
-                            }).on('click', onClick, way));
-                        }
-                    });
-                    map.fireEvent('dataload'); 
-                });            
-            });
-        };
-
-
-
-
-
-
-/*
-/// @see http://taginfo.openstreetmap.org/keys/?key=hazard#values
-
-/*
-   		var mapboxLayer = L.tileLayer('//{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
-			maxZoom: 18,
-			attribution: 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
-			id: 'examples.map-i875mjb7'
-		});
-*/
-
-/*
-   		var mapquestLayer = L.tileLayer('//otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
-			maxZoom: 19,
-			attribution: 'Données &copy; Les contributeurs d\'<a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
-				         '<a href="http://opendatacommons.org/licenses/odbl/1-0/">ODbL 1.0</a>, ' +
-                         'Extraction avec <a href="http://overpass-api.de/">Overpass (de)</a>, ' +
-                         'Tiles Courtesy of <a href="http://www.mapquest.com/" target="_blank">MapQuest</a> <img src="http://developer.mapquest.com/content/osm/mq_logo.png">',
-            subdomains: '1234'				
-		});
-*/
-   		var stamenLayer = L.tileLayer('http://{s}.tile.stamen.com/toner-lite/{z}/{x}/{y}.png', {
-			maxZoom: 19,
-			attribution: 'Données &copy; Les contributeurs d\'<a href="http://openstreetmap.org">OpenStreetMap</a>, ' +
-				         '<a href="http://opendatacommons.org/licenses/odbl/1-0/">ODbL 1.0</a>, ' +
-                         'Extraction avec <a href="http://overpass-api.de/">Overpass (de)</a>, ' +
-                         '<a href="http://maps.stamen.com/" target="_blank">Map tiles</a> by <a href="http://stamen.com/" target="_blank">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0" target="_blank">CC BY 3.0</a>'
-		});
-
-//   		var image = L.imageOverlay('http://panneauxbiche.com/calcul.php', [[-89.5,-180],[89.5,180]]);
-
-
-        var map;
-        var hash;
-        var userLocationLayer = null;
-        
-        window.addEventListener('DOMContentLoaded', function(e) {
-            map = L.map('map', {
-                layers: [stamenLayer, layers[0].group],
-                center: [45, 2],
-                zoom: 6,
-                loadingControl: true
-            });
-            
-            map.addControl(new informationControl());
-
-            var overlays = {};
-//            overlays['Image'] = image;
-            layers.forEach(function(layer){
-                overlays[layer.title] = layer.group;
-            });
-            map.addControl(L.control.layers({'Stamen': stamenLayer}, overlays, {
-                collapsed: true    
-            }));
-            
-
-            hash = L.hash(map);
-
-            map.on('overlayadd', askForPlots);
-            map.on('moveend', askForPlots);
-    
-            map.on('locationfound', function(e){
-//                console.log('LocationFound', e);
-                userLocation = e;
-    			var radius = e.accuracy / 2;
-    //			L.marker(e.latlng).addTo(map)
-    //				.bindPopup("Vous êtes dans un rayon de " + radius + " m.").openPopup();
-                if (userLocationLayer != null) {
-                    map.removeLayer(userLocationLayer);
-                }
-    			userLocationLayer = L.circle(e.latlng, radius).addTo(map);
-            });
-    
-            map.locate({
-                watch: true,                // follow location
-                enableHighAccuracy: true    // using GPS
-            });
-
-            askForPlots();
-        
-        });
-
-
-
-/*
-Passer à photon.komoot.de avec autocomplétion
-
-        new L.Control.OSMGeocoder({    // https://github.com/k4r573n/leaflet-control-osm-geocoder
-        position: 'topleft',
-        text: 'Centrer',
-        email: 'panneauxbiche.com'
-        }).addTo(map);
-*/
-
-
-
-
-    </x-script>
--->
-
-<!--  <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script> -->
-  <script
-    src="https://code.jquery.com/jquery-3.2.1.min.js"
-    integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-    crossorigin="anonymous"></script>
-  <script type="text/javascript">
+<script type="text/javascript">
 
 /**
  * Instance of "i" control which show some informations.
@@ -325,6 +100,14 @@ var informationControl = L.Control.extend({
     }
 });    
 
+/**
+ * Génère le layer à partir des paramètres.
+ * @param bbox n'est pas utilisé.
+ * @param title Indique le nom de la couche.
+ * @param iconURL donne l'URL de l'icone utilisée pour la couche.
+ * @param iconSize donne les coordonnées [x y] de l'icone.
+ * @return la couche instanciée.
+ */        
 function dessiner(bbox, title, iconUrl, iconSize) {
   var icon = new L.Icon({
     iconUrl: iconUrl,
@@ -374,10 +157,10 @@ function dessiner(bbox, title, iconUrl, iconSize) {
   return layer;
 }
   
-  
-<!--
- 
---> 
+/**
+ * Cette fonction se lance automatiquement quand tout le DOM de la page est 
+ * chargé.
+ */
 $(function() {
   var map = L.map('map', {
     center: [45, 2],
